@@ -1,0 +1,5 @@
+{
+  "name": "Clarix AI",
+  "description": "An adaptive learning platform powered by Gemini API that generates personalized content and learning paths.",
+  "requestFramePermissions": []
+}
