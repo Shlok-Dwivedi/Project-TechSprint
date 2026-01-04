@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Mentor - TechSprint</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .chat-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #f9f9f9;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            background: #007bff;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message.assistant {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        .send-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .feature-card h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #666;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .chat-messages {
+                height: 300px;
+            }
+
+            .input-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-btn">← Back to Home</a>
+
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI Mentor</h1>
+            <p>Get personalized guidance and answers to your coding questions</p>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <div class="message assistant">
+                    <strong>AI Mentor:</strong> Hello! I'm your AI coding assistant. Ask me anything about programming concepts, debugging help, or learning guidance!
+                </div>
+            </div>
+
+            <div class="loading" id="loading">Thinking...</div>
+
+            <div class="input-container">
+                <input type="text" id="messageInput" class="message-input" placeholder="Ask me anything about coding..." onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()" class="send-btn">Send</button>
+            </div>
+        </div>
+
+        <div class="features">
+            <div class="feature-card">
+                <h3>💡 Concept Explanations</h3>
+                <p>Get detailed explanations of programming concepts</p>
+            </div>
+            <div class="feature-card">
+                <h3>🐛 Debugging Help</h3>
+                <p>Debug your code with AI-powered assistance</p>
+            </div>
+            <div class="feature-card">
+                <h3>📚 Learning Paths</h3>
+                <p>Get personalized learning recommendations</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sessionId = null;
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            addMessage(message, 'user');
+            input.value = '';
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+
+            // Send to API
+            fetch('/api/v1/ai/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // Note: In a real app, you'd get the auth token from localStorage/session
+                    'Authorization': 'Bearer YOUR_TOKEN_HERE'
+                },
+                body: JSON.stringify({
+                    message: message,
+                    session_id: sessionId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+
+                if (data.error) {
+                    addMessage('Sorry, there was an error. Please try again.', 'assistant');
+                } else {
+                    sessionId = data.session_id;
+                    addMessage(data.response, 'assistant');
+
+                    // Add suggestions if available
+                    if (data.suggestions && data.suggestions.length > 0) {
+                        const suggestions = data.suggestions.join(', ');
+                        addMessage(`💡 Suggestions: ${suggestions}`, 'assistant');
+                    }
+                }
+            })
+            .catch(error => {
+                document.getElementById('loading').style.display = 'none';
+                addMessage('Sorry, I couldn\'t connect to the server. Please try again.', 'assistant');
+                console.error('Error:', error);
+            });
+        }
+
+        function addMessage(content, type) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+
+            if (type === 'assistant') {
+                messageDiv.innerHTML = `<strong>AI Mentor:</strong> ${content}`;
+            } else {
+                messageDiv.textContent = content;
+            }
+
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('messageInput').focus();
+        });
+    </script>
+</body>
+</html>
